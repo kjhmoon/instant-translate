@@ -15,7 +15,7 @@
     :host { all: initial; } /* 섀도우 캡슐화 보강 */
     .tooltip-container {
       box-sizing: border-box;
-      width: 350px; /* [수정] 너비를 350px로 고정하여 가독성 향상 */
+      width: 350px;
       max-width: 380px;
       min-width: 120px;
       padding: 10px 12px;
@@ -54,7 +54,6 @@
   function createTooltip(rect) {
     removeExistingTooltip();
     tooltipHost = document.createElement('div');
-    // 스타일/속성이 페이지 스타일에 영향을 받지 않도록 섀도우돔 사용
     const shadowRoot = tooltipHost.attachShadow({ mode: 'open' });
     currentShadowRoot = shadowRoot;
 
@@ -66,12 +65,10 @@
     container.innerHTML = tooltipHTML;
     shadowRoot.appendChild(container);
 
-    // 위치 계산: rect는 뷰포트 기준이라 스크롤 보정
-    const top = rect.bottom + window.scrollY + 8; // 선택 아래쪽으로 약간 띄움
+    const top = rect.bottom + window.scrollY + 8;
     let left = rect.left + window.scrollX;
-    // 화면 오른쪽을 넘기지 않도록 최대값 조정
     const viewportWidth = document.documentElement.clientWidth;
-    const estWidth = 360; // tooltip 최대 가정
+    const estWidth = 360;
     if (left + estWidth > window.scrollX + viewportWidth) {
       left = window.scrollX + viewportWidth - estWidth - 12;
     }
@@ -85,6 +82,11 @@
   }
 
   document.addEventListener('mouseup', (ev) => {
+    // 툴팁 자체를 클릭한 경우는 무시 (텍스트 복사 등을 위해)
+    if (tooltipHost && tooltipHost.contains(ev.target)) {
+      return;
+    }
+      
     try {
       const selection = window.getSelection();
       if (!selection || selection.rangeCount === 0) {
@@ -109,20 +111,16 @@
       contentEl.style.display = 'none';
       loaderEl.style.display = 'block';
 
-      chrome.runtime.sendMessage({ type: 'TRANSLATE_TEXT', text: selectedText }, (resp) => {
-        // sendMessage의 콜백은 옵션
-      });
+      chrome.runtime.sendMessage({ type: 'TRANSLATE_TEXT', text: selectedText });
     } catch (err) {
       console.error('instant-translate content-script error:', err);
       removeExistingTooltip();
     }
   });
 
-  // 서비스워커로부터의 번역 결과 수신
   chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     if (!currentShadowRoot) return;
 
-    // [추가] 번역이 필요 없는 경우(원본과 목표 언어 동일) 툴팁을 그냥 제거
     if (message && message.type === 'TRANSLATION_SKIPPED') {
       removeExistingTooltip();
       return;
@@ -150,7 +148,12 @@
   document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') removeExistingTooltip();
   });
-  document.addEventListener('scroll', () => {
-    removeExistingTooltip();
-  }, true);
+
+  /*
+   [수정] 스크롤 시 툴팁이 사라지는 현상을 막기 위해 아래 이벤트 리스너를 주석 처리합니다.
+   이제 툴팁은 스크롤해도 사라지지 않고, 화면의 다른 곳을 클릭하거나 Esc 키를 눌러야 사라집니다.
+  */
+  // document.addEventListener('scroll', () => {
+  //   removeExistingTooltip();
+  // }, true);
 })();
