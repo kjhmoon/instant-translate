@@ -1,72 +1,169 @@
-/* options.css (수정된 전체 코드) */
+/* options.css */
 :root {
-  --bg: #f7f8fa;
-  --card: #ffffff;
-  --accent: #1a73e8;
-  --text: #111827;
+    --primary-color: #007aff;
+    --background-color: #f4f4f8;
+    --card-background-color: #ffffff;
+    --text-color: #1d1d1f;
+    --subtle-text-color: #6e6e73;
+    --border-color: #d1d1d6;
+    --button-secondary-bg: #e9e9eb;
 }
 
-/* [수정] 팝업창의 전체 크기를 지정하고 내부 여백을 추가합니다. */
-html, body {
-  width: 360px; /* 팝업창의 가로 너비를 360px로 지정 */
-  margin: 0;
-  padding: 0; /* 불필요한 패딩 제거 */
-  font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
-  background: var(--bg);
-  color: var(--text);
+/* [수정] body 태그에 팝업창의 고정 너비를 지정하고 불필요한 스타일을 제거합니다. */
+body {
+    width: 400px; /* 팝업창의 전체 너비를 400px로 설정 */
+    margin: 0;
+    font-family: 'Noto Sans KR', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background-color: var(--background-color);
+    color: var(--text-color);
+    box-sizing: border-box;
 }
 
-/* [수정] 팝업창 환경에 맞게 컨테이너의 여백과 그림자를 조정합니다. */
-.container {
-  /* max-width는 더 이상 필요 없으므로 제거 */
-  margin: 0; /* 여백을 제거하여 꽉 채움 */
-  background: var(--card);
-  padding: 20px; /* 내부 콘텐츠 여백은 유지 */
-  /* 그림자와 테두리 곡률은 제거 (팝업창 자체 스타일과 겹칠 수 있음) */
+/* [수정] wrapper는 body 너비를 100% 채우도록 하고, 내부 여백(padding)을 갖도록 변경합니다. */
+.wrapper {
+    width: 100%;
+    background-color: var(--card-background-color);
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    overflow: hidden;
+    box-sizing: border-box;
 }
 
-h1 {
-  margin-top: 0;
-  margin-bottom: 12px;
-  font-size: 20px;
+header {
+    text-align: center;
+    padding: 24px 20px 16px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+header h1 {
+    margin: 0;
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--text-color);
+}
+
+header p {
+    margin: 4px 0 0;
+    font-size: 14px;
+    color: var(--subtle-text-color);
+}
+
+main {
+    padding: 20px;
+}
+
+.form-group {
+    margin-bottom: 20px;
 }
 
 label {
-  display: block;
-  margin-top: 12px;
-  margin-bottom: 6px;
-  font-weight: 600;
-  font-size: 13px;
+    display: block;
+    font-size: 14px;
+    font-weight: 500;
+    margin-bottom: 8px;
+    color: var(--text-color);
 }
 
 input[type="password"],
 select {
-  width: 100%;
-  padding: 8px 10px;
-  border-radius: 6px;
-  border: 1px solid #e6e9ef;
-  font-size: 14px;
-  box-sizing: border-box;
+    width: 100%;
+    padding: 10px 12px;
+    font-size: 14px;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    background-color: #fff;
+    box-sizing: border-box;
+    transition: border-color 0.2s, box-shadow 0.2s;
 }
 
-.buttons {
-  margin-top: 16px;
-  display: flex;
-  gap: 8px;
+input[type="password"]:focus,
+select:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.2);
 }
 
-button {
-  padding: 8px 12px;
-  border-radius: 8px;
-  border: none;
-  background: var(--accent);
-  color: white;
-  font-weight: 600;
-  cursor: pointer;
+.select-wrapper {
+    position: relative;
+}
+
+.select-wrapper::after {
+    content: '▼';
+    font-size: 10px;
+    color: var(--subtle-text-color);
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    pointer-events: none;
+}
+
+select {
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
 }
 
 #status {
-  margin-top: 10px;
-  font-size: 13px;
-  color: #0b5;
+    font-size: 13px;
+    color: var(--primary-color);
+    text-align: center;
+    margin-bottom: 16px;
+    min-height: 18px;
+}
+
+.button-group {
+    display: flex;
+    gap: 10px;
+}
+
+.btn {
+    flex-grow: 1;
+    padding: 12px;
+    font-size: 15px;
+    font-weight: 500;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+    transition: background-color 0.2s, transform 0.1s;
+}
+
+.btn:active {
+    transform: scale(0.98);
+}
+
+.btn-primary {
+    background-color: var(--primary-color);
+    color: white;
+}
+
+.btn-primary:hover {
+    background-color: #006ae1;
+}
+
+.btn-secondary {
+    background-color: var(--button-secondary-bg);
+    color: var(--text-color);
+}
+
+.btn-secondary:hover {
+    background-color: #e1e1e3;
+}
+
+footer {
+    text-align: center;
+    padding: 16px;
+    background-color: var(--background-color);
+}
+
+footer a {
+    font-size: 12px;
+    color: var(--subtle-text-color);
+    text-decoration: none;
+    transition: color 0.2s;
+}
+
+footer a:hover {
+    color: var(--primary-color);
+    text-decoration: underline;
 }

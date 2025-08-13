@@ -1,38 +1,62 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Instant Translate Settings</title>
-  <link rel="stylesheet" href="options.css" />
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Instant Translate Settings</title>
+    <link rel="stylesheet" href="options.css">
+    <!-- Google Fonts 추가 -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
 </head>
 <body>
-  <main class="container">
-    <h1>Instant Translate 설정</h1>
-    <form id="settings-form">
-      <label for="apiKey">DeepL API Key</label>
-      <input id="apiKey" type="password" placeholder="DeepL-Auth-Key 입력" />
+    <div class="wrapper">
+        <header>
+            <h1>Instant Translate</h1>
+            <p>설정</p>
+        </header>
 
-      <label for="targetLang">Target Language</label>
-      <select id="targetLang">
-        <option value="EN">English (EN)</option>
-        <option value="DE">Deutsch (DE)</option>
-        <option value="FR">Français (FR)</option>
-        <option value="JA">日本語 (JA)</option>
-        <option value="KO">한국어 (KO)</option>
-        <option value="ES">Español (ES)</option>
-        <option value="ZH">中文 (ZH)</option>
-        <!-- 필요시 추가 -->
-      </select>
+        <main>
+            <form id="settings-form">
+                <div class="form-group">
+                    <label for="apiKey">DeepL API Key</label>
+                    <input type="password" id="apiKey" placeholder="Your DeepL API Key">
+                </div>
 
-      <div class="buttons">
-        <button id="saveBtn" type="button">저장</button>
-        <button id="clearBtn" type="button">지우기</button>
-      </div>
+                <div class="form-group">
+                    <label for="targetLang">Target Language</label>
+                    <div class="select-wrapper">
+                      <select id="targetLang">
+                          <option value="EN">English (영어)</option>
+                          <option value="KO">Korean (한국어)</option>
+                          <option value="JA">Japanese (일본어)</option>
+                          <option value="ZH">Chinese (중국어)</option>
+                          <option value="DE">German (독일어)</option>
+                          <option value="FR">French (프랑스어)</option>
+                          <option value="ES">Spanish (스페인어)</option>
+                          <option value="RU">Russian (러시아어)</option>
+                          <option value="IT">Italian (이탈리아어)</option>
+                          <option value="PT">Portuguese (포르투갈어)</option>
+                      </select>
+                    </div>
+                </div>
 
-      <div id="status" aria-live="polite"></div>
-    </form>
-  </main>
-  <script src="options.js"></script>
+                <div id="status" aria-live="polite"></div>
+
+                <div class="button-group">
+                    <button type="button" id="saveBtn" class="btn btn-primary">저장</button>
+                    <button type="button" id="clearBtn" class="btn btn-secondary">API 키 지우기</button>
+                </div>
+            </form>
+        </main>
+
+        <footer>
+            <a href="https://github.com/kjhmoon/instant-translate" target="_blank" rel="noopener noreferrer">
+                GitHub
+            </a>
+        </footer>
+    </div>
+    <script src="options.js"></script>
 </body>
 </html>
