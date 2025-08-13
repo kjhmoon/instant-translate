@@ -42,13 +42,15 @@
 ---
 
 ### 📂 프로젝트 구조
+```
 ├── manifest.json       # 확장 프로그램의 이름, 버전, 권한 등 핵심 정보를 정의
 ├── service-worker.js   # 백그라운드에서 DeepL API 통신 및 번역 로직 실행
 ├── content-script.js   # 웹 페이지에 삽입되어 텍스트 선택 감지 및 툴팁 UI 생성
 └── options/            # 사용자가 API 키와 언어를 설정하는 옵션 페이지 관련 파일
-├── options.html
-├── options.css
-└── options.js
+    ├── options.html
+    ├── options.css
+    └── options.js
+
 
 * **`manifest.json`**: 확장 프로그램의 이름, 버전, 권한 등 핵심 정보를 정의하는 파일입니다.
 * **`service-worker.js`**: 백그라운드에서 DeepL API 통신을 처리하고 번역 로직을 실행합니다.
