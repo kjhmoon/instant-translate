@@ -1,0 +1,72 @@
+/* options.css (수정된 전체 코드) */
+:root {
+  --bg: #f7f8fa;
+  --card: #ffffff;
+  --accent: #1a73e8;
+  --text: #111827;
+}
+
+/* [수정] 팝업창의 전체 크기를 지정하고 내부 여백을 추가합니다. */
+html, body {
+  width: 360px; /* 팝업창의 가로 너비를 360px로 지정 */
+  margin: 0;
+  padding: 0; /* 불필요한 패딩 제거 */
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+  background: var(--bg);
+  color: var(--text);
+}
+
+/* [수정] 팝업창 환경에 맞게 컨테이너의 여백과 그림자를 조정합니다. */
+.container {
+  /* max-width는 더 이상 필요 없으므로 제거 */
+  margin: 0; /* 여백을 제거하여 꽉 채움 */
+  background: var(--card);
+  padding: 20px; /* 내부 콘텐츠 여백은 유지 */
+  /* 그림자와 테두리 곡률은 제거 (팝업창 자체 스타일과 겹칠 수 있음) */
+}
+
+h1 {
+  margin-top: 0;
+  margin-bottom: 12px;
+  font-size: 20px;
+}
+
+label {
+  display: block;
+  margin-top: 12px;
+  margin-bottom: 6px;
+  font-weight: 600;
+  font-size: 13px;
+}
+
+input[type="password"],
+select {
+  width: 100%;
+  padding: 8px 10px;
+  border-radius: 6px;
+  border: 1px solid #e6e9ef;
+  font-size: 14px;
+  box-sizing: border-box;
+}
+
+.buttons {
+  margin-top: 16px;
+  display: flex;
+  gap: 8px;
+}
+
+button {
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: none;
+  background: var(--accent);
+  color: white;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+#status {
+  margin-top: 10px;
+  font-size: 13px;
+  color: #0b5;
+}

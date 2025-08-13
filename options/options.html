@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Instant Translate Settings</title>
+  <link rel="stylesheet" href="options.css" />
+</head>
+<body>
+  <main class="container">
+    <h1>Instant Translate 설정</h1>
+    <form id="settings-form">
+      <label for="apiKey">DeepL API Key</label>
+      <input id="apiKey" type="password" placeholder="DeepL-Auth-Key 입력" />
+
+      <label for="targetLang">Target Language</label>
+      <select id="targetLang">
+        <option value="EN">English (EN)</option>
+        <option value="DE">Deutsch (DE)</option>
+        <option value="FR">Français (FR)</option>
+        <option value="JA">日本語 (JA)</option>
+        <option value="KO">한국어 (KO)</option>
+        <option value="ES">Español (ES)</option>
+        <option value="ZH">中文 (ZH)</option>
+        <!-- 필요시 추가 -->
+      </select>
+
+      <div class="buttons">
+        <button id="saveBtn" type="button">저장</button>
+        <button id="clearBtn" type="button">지우기</button>
+      </div>
+
+      <div id="status" aria-live="polite"></div>
+    </form>
+  </main>
+  <script src="options.js"></script>
+</body>
+</html>
