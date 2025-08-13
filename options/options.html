@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="ko">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -8,13 +8,14 @@
     <!-- Google Fonts 추가 -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&family=Roboto:wght@400;500&display=swap" rel="stylesheet">
 </head>
 <body>
     <div class="wrapper">
         <header>
             <h1>Instant Translate</h1>
-            <p>설정</p>
+            <!-- [수정] '설정' -> 'Settings' -->
+            <p>Settings</p>
         </header>
 
         <main>
@@ -45,16 +46,18 @@
                 <div id="status" aria-live="polite"></div>
 
                 <div class="button-group">
-                    <button type="button" id="saveBtn" class="btn btn-primary">저장</button>
-                    <button type="button" id="clearBtn" class="btn btn-secondary">API 키 지우기</button>
+                    <!-- [수정] 버튼 텍스트를 영어로 변경 -->
+                    <button type="button" id="saveBtn" class="btn btn-primary">Save</button>
+                    <button type="button" id="clearBtn" class="btn btn-secondary">Clear API Key</button>
                 </div>
             </form>
         </main>
 
         <footer>
-            <a href="https://github.com/kjhmoon/instant-translate" target="_blank" rel="noopener noreferrer">
-                GitHub
-            </a>
+            <!-- [수정] 이메일 링크 추가 -->
+            <a href="https://github.com/kjhmoon/instant-translate" target="_blank" rel="noopener noreferrer">GitHub</a>
+            <span class="footer-separator">|</span>
+            <a href="mailto:kjhmoon06@naver.com">kjhmoon06@naver.com</a>
         </footer>
     </div>
     <script src="options.js"></script>

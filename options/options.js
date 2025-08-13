@@ -14,8 +14,8 @@ function saveOptions() {
   const apiKey = apiKeyInput.value.trim();
   const targetLang = targetLangSelect.value;
   chrome.storage.sync.set({ apiKey, targetLang }, () => {
-    showStatus('설정이 저장되었습니다.');
-    // 선택적으로 다른 페이지들에 변경사항을 알릴 수 있음
+    // [수정] 상태 메시지를 영어로 변경
+    showStatus('Settings saved.');
   });
 }
 
@@ -29,7 +29,8 @@ function restoreOptions() {
 function clearOptions() {
   apiKeyInput.value = '';
   chrome.storage.sync.remove(['apiKey'], () => {
-    showStatus('API 키가 삭제되었습니다.');
+    // [수정] 상태 메시지를 영어로 변경
+    showStatus('API Key cleared.');
   });
 }
 
