@@ -1,17 +1,18 @@
 /* options.css */
 :root {
-    --primary-color: #007aff;
-    --background-color: #f4f4f8;
+    /* [수정] 연한 푸른색 계열의 새로운 색상 테마를 적용합니다. */
+    --primary-color: #3898F3;
+    --primary-color-hover: #2f80ed;
+    --background-color: #f8f9fa;
     --card-background-color: #ffffff;
-    --text-color: #1d1d1f;
-    --subtle-text-color: #6e6e73;
-    --border-color: #d1d1d6;
-    --button-secondary-bg: #e9e9eb;
+    --text-color: #202124;
+    --subtle-text-color: #5f6368;
+    --border-color: #e0e0e0;
+    --button-secondary-bg: #f1f3f4;
 }
 
-/* [수정] body 태그에 팝업창의 고정 너비를 지정하고 불필요한 스타일을 제거합니다. */
 body {
-    width: 400px; /* 팝업창의 전체 너비를 400px로 설정 */
+    width: 400px;
     margin: 0;
     font-family: 'Noto Sans KR', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     background-color: var(--background-color);
@@ -19,41 +20,41 @@ body {
     box-sizing: border-box;
 }
 
-/* [수정] wrapper는 body 너비를 100% 채우도록 하고, 내부 여백(padding)을 갖도록 변경합니다. */
 .wrapper {
     width: 100%;
     background-color: var(--card-background-color);
-    border-radius: 12px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    /* [수정] 테두리를 더 둥글게 만듭니다. */
+    border-radius: 16px; 
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
     overflow: hidden;
     box-sizing: border-box;
 }
 
 header {
     text-align: center;
-    padding: 24px 20px 16px;
+    padding: 28px 24px 20px;
     border-bottom: 1px solid var(--border-color);
 }
 
 header h1 {
     margin: 0;
-    font-size: 22px;
+    font-size: 24px;
     font-weight: 700;
     color: var(--text-color);
 }
 
 header p {
     margin: 4px 0 0;
-    font-size: 14px;
+    font-size: 15px;
     color: var(--subtle-text-color);
 }
 
 main {
-    padding: 20px;
+    padding: 24px;
 }
 
 .form-group {
-    margin-bottom: 20px;
+    margin-bottom: 22px;
 }
 
 label {
@@ -67,10 +68,11 @@ label {
 input[type="password"],
 select {
     width: 100%;
-    padding: 10px 12px;
+    padding: 12px 14px;
     font-size: 14px;
     border: 1px solid var(--border-color);
-    border-radius: 8px;
+    /* [수정] 입력창 테두리를 더 둥글게 만듭니다. */
+    border-radius: 10px; 
     background-color: #fff;
     box-sizing: border-box;
     transition: border-color 0.2s, box-shadow 0.2s;
@@ -80,7 +82,7 @@ input[type="password"]:focus,
 select:focus {
     outline: none;
     border-color: var(--primary-color);
-    box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.2);
+    box-shadow: 0 0 0 3px rgba(56, 152, 243, 0.25);
 }
 
 .select-wrapper {
@@ -92,7 +94,7 @@ select:focus {
     font-size: 10px;
     color: var(--subtle-text-color);
     position: absolute;
-    right: 12px;
+    right: 14px;
     top: 50%;
     transform: translateY(-50%);
     pointer-events: none;
@@ -108,13 +110,13 @@ select {
     font-size: 13px;
     color: var(--primary-color);
     text-align: center;
-    margin-bottom: 16px;
+    margin-bottom: 18px;
     min-height: 18px;
 }
 
 .button-group {
     display: flex;
-    gap: 10px;
+    gap: 12px;
 }
 
 .btn {
@@ -122,7 +124,8 @@ select {
     padding: 12px;
     font-size: 15px;
     font-weight: 500;
-    border-radius: 8px;
+    /* [수정] 버튼 테두리를 더 둥글게 만듭니다. */
+    border-radius: 10px; 
     border: none;
     cursor: pointer;
     transition: background-color 0.2s, transform 0.1s;
@@ -138,7 +141,7 @@ select {
 }
 
 .btn-primary:hover {
-    background-color: #006ae1;
+    background-color: var(--primary-color-hover);
 }
 
 .btn-secondary {
@@ -147,17 +150,17 @@ select {
 }
 
 .btn-secondary:hover {
-    background-color: #e1e1e3;
+    background-color: #e8eaed;
 }
 
 footer {
     text-align: center;
-    padding: 16px;
+    padding: 20px;
     background-color: var(--background-color);
 }
 
 footer a {
-    font-size: 12px;
+    font-size: 13px;
     color: var(--subtle-text-color);
     text-decoration: none;
     transition: color 0.2s;
