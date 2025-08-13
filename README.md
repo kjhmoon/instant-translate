@@ -50,14 +50,12 @@
     ├── options.html
     ├── options.css
     └── options.js
-
+```
 
 * **`manifest.json`**: 확장 프로그램의 이름, 버전, 권한 등 핵심 정보를 정의하는 파일입니다.
 * **`service-worker.js`**: 백그라운드에서 DeepL API 통신을 처리하고 번역 로직을 실행합니다.
 * **`content-script.js`**: 웹 페이지에 직접 삽입되어 사용자의 텍스트 선택을 감지하고, 번역 결과를 보여줄 툴팁 UI를 생성합니다.
 * **`options/`**: 사용자가 API 키와 번역 언어를 설정할 수 있는 옵션 페이지 관련 파일들(HTML, CSS, JS)이 들어있습니다.
-
-```
 
 ---
 
