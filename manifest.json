@@ -1,8 +1,15 @@
 {
   "manifest_version": 3,
   "name": "Instant Translate",
-  "description": "드래그한 텍스트를 즉시 페이지 내에서 번역해 주는 확장 프로그램",
   "version": "1.0.0",
+  "description": "Translate selected text instantly on the page.",
+  "permissions": [
+    "storage",
+    "scripting"
+  ],
+  "host_permissions": [
+    "https://api-free.deepl.com/*"
+  ],
   "icons": {
     "16": "icons/icon16.png",
     "48": "icons/icon48.png",
@@ -10,7 +17,11 @@
   },
   "action": {
     "default_popup": "options/options.html",
-    "default_title": "Instant Translate - 설정"
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    }
   },
   "background": {
     "service_worker": "service-worker.js"
@@ -19,14 +30,7 @@
     {
       "matches": ["<all_urls>"],
       "js": ["content-script.js"],
-      "run_at": "document_end"
+      "run_at": "document_idle"
     }
-  ],
-  "permissions": [
-    "storage",
-    "scripting"
-  ],
-  "host_permissions": [
-    "https://api-free.deepl.com/*"
   ]
 }
