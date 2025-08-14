@@ -82,21 +82,23 @@
   }
 
   document.addEventListener('mouseup', (ev) => {
+    // [수정] Ctrl 키가 눌리지 않았으면, 번역 로직을 실행하지 않고 즉시 종료합니다.
+    if (!ev.ctrlKey) {
+      removeExistingTooltip();
+      return;
+    }
+      
     if (tooltipHost && tooltipHost.contains(ev.target)) {
       return;
     }
       
-    // [수정] 기본값을 포함하여 설정을 가져오고, 상태를 콘솔에 기록합니다.
     chrome.storage.sync.get({ isEnabled: true }, (settings) => {
-      // 디버깅을 위한 로그: F12를 눌러 개발자 도구의 Console 탭에서 확인 가능합니다.
       console.log(`[Instant Translate] 현재 활성화 상태: ${settings.isEnabled}`);
 
-      // isEnabled가 false이면 여기서 함수를 완전히 종료합니다.
       if (!settings.isEnabled) {
         return;
       }
 
-      // --- 활성화 상태일 때만 아래 로직이 실행됩니다 ---
       try {
         const selection = window.getSelection();
         if (!selection || selection.rangeCount === 0) {
@@ -129,7 +131,6 @@
     });
   });
 
-  // ... (chrome.runtime.onMessage 리스너 등 나머지 코드는 이전과 동일) ...
   chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     if (!currentShadowRoot) return;
 
