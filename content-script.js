@@ -1,9 +1,9 @@
 // content-script.js
 (() => {
-  let tooltipHost = null; // 전역참조: 현재 주입된 툴팁 호스트 (중복 방지)
+  let tooltipHost = null; 
   let currentShadowRoot = null;
 
-  // tooltip HTML & CSS (문자열로 보관하여 섀도우 루트에 주입)
+  // ... (tooltipHTML, tooltipCSS, removeExistingTooltip, createTooltip 함수는 이전과 동일) ...
   const tooltipHTML = `
     <div class="tooltip-container" role="dialog" aria-live="polite">
       <div class="tooltip-loader" aria-hidden="true"></div>
@@ -12,7 +12,7 @@
   `;
 
   const tooltipCSS = `
-    :host { all: initial; } /* 섀도우 캡슐화 보강 */
+    :host { all: initial; }
     .tooltip-container {
       box-sizing: border-box;
       width: 350px;
@@ -82,42 +82,54 @@
   }
 
   document.addEventListener('mouseup', (ev) => {
-    // 툴팁 자체를 클릭한 경우는 무시 (텍스트 복사 등을 위해)
     if (tooltipHost && tooltipHost.contains(ev.target)) {
       return;
     }
       
-    try {
-      const selection = window.getSelection();
-      if (!selection || selection.rangeCount === 0) {
-        removeExistingTooltip();
-        return;
-      }
-      const selectedText = selection.toString().trim();
+    // [수정] 기본값을 포함하여 설정을 가져오고, 상태를 콘솔에 기록합니다.
+    chrome.storage.sync.get({ isEnabled: true }, (settings) => {
+      // 디버깅을 위한 로그: F12를 눌러 개발자 도구의 Console 탭에서 확인 가능합니다.
+      console.log(`[Instant Translate] 현재 활성화 상태: ${settings.isEnabled}`);
 
-      if (!selectedText) {
-        removeExistingTooltip();
+      // isEnabled가 false이면 여기서 함수를 완전히 종료합니다.
+      if (!settings.isEnabled) {
         return;
       }
 
-      const range = selection.getRangeAt(0);
-      const rect = range.getBoundingClientRect();
-      if (!rect || (rect.width === 0 && rect.height === 0)) return;
+      // --- 활성화 상태일 때만 아래 로직이 실행됩니다 ---
+      try {
+        const selection = window.getSelection();
+        if (!selection || selection.rangeCount === 0) {
+          removeExistingTooltip();
+          return;
+        }
+        const selectedText = selection.toString().trim();
 
-      const shadow = createTooltip(rect);
-      const contentEl = shadow.querySelector('.tooltip-content');
-      const loaderEl = shadow.querySelector('.tooltip-loader');
+        if (!selectedText) {
+          removeExistingTooltip();
+          return;
+        }
 
-      contentEl.style.display = 'none';
-      loaderEl.style.display = 'block';
+        const range = selection.getRangeAt(0);
+        const rect = range.getBoundingClientRect();
+        if (!rect || (rect.width === 0 && rect.height === 0)) return;
 
-      chrome.runtime.sendMessage({ type: 'TRANSLATE_TEXT', text: selectedText });
-    } catch (err) {
-      console.error('instant-translate content-script error:', err);
-      removeExistingTooltip();
-    }
+        const shadow = createTooltip(rect);
+        const contentEl = shadow.querySelector('.tooltip-content');
+        const loaderEl = shadow.querySelector('.tooltip-loader');
+
+        contentEl.style.display = 'none';
+        loaderEl.style.display = 'block';
+
+        chrome.runtime.sendMessage({ type: 'TRANSLATE_TEXT', text: selectedText });
+      } catch (err) {
+        console.error('instant-translate content-script error:', err);
+        removeExistingTooltip();
+      }
+    });
   });
 
+  // ... (chrome.runtime.onMessage 리스너 등 나머지 코드는 이전과 동일) ...
   chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     if (!currentShadowRoot) return;
 
@@ -148,12 +160,4 @@
   document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') removeExistingTooltip();
   });
-
-  /*
-   [수정] 스크롤 시 툴팁이 사라지는 현상을 막기 위해 아래 이벤트 리스너를 주석 처리합니다.
-   이제 툴팁은 스크롤해도 사라지지 않고, 화면의 다른 곳을 클릭하거나 Esc 키를 눌러야 사라집니다.
-  */
-  // document.addEventListener('scroll', () => {
-  //   removeExistingTooltip();
-  // }, true);
 })();

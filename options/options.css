@@ -8,6 +8,8 @@
     --subtle-text-color: #5f6368;
     --border-color: #e0e0e0;
     --button-secondary-bg: #f1f3f4;
+    --toggle-bg-off: #d3d3d3;
+    --toggle-bg-on: #34c759; /* iOS Green */
 }
 
 body {
@@ -55,6 +57,78 @@ main {
 .form-group {
     margin-bottom: 22px;
 }
+
+/* --- [수정] 토글 스위치 스타일 (위치 미세 조정) --- */
+.toggle-group {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 4px;
+    border-bottom: 1px solid var(--border-color);
+    margin-bottom: 24px;
+}
+
+.toggle-label {
+    font-size: 16px;
+    font-weight: 500;
+    margin-bottom: 0;
+}
+
+.toggle-switch {
+    position: relative;
+    display: inline-block;
+    width: 52px;  /* 스위치 전체 너비 */
+    height: 24px; /* 스위치 전체 높이 */
+}
+
+.toggle-input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.toggle-slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: var(--toggle-bg-off);
+    transition: .4s;
+    border-radius: 32px; /* 높이와 동일하게 하여 완벽한 반원 형태 유지 */
+    margin-bottom: 0;
+}
+
+.toggle-slider:before {
+    position: absolute;
+    content: "";
+    /* [수정] 원(thumb)의 크기를 조정하여 여백 확보 */
+    height: 18px; 
+    width: 18px;
+    /* [수정] 상하좌우 여백(3px)을 동일하게 맞추기 위한 위치 조정 */
+    left: 4px;
+    bottom: 3px;
+    background-color: white;
+    transition: .4s;
+    border-radius: 50%;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.15);
+}
+
+.toggle-input:checked + .toggle-slider {
+    background-color: var(--toggle-bg-on);
+}
+
+.toggle-input:focus + .toggle-slider {
+    box-shadow: 0 0 1px var(--toggle-bg-on);
+}
+
+.toggle-input:checked + .toggle-slider:before {
+    /* [수정] 이동 거리를 재계산하여 중앙 정렬 (전체너비 52px - 원너비 26px - 좌측여백 3px - 우측여백 3px = 20px) */
+    transform: translateX(26px);
+}
+/* --- 끝: 토글 스위치 스타일 --- */
+
 
 label {
     display: block;
@@ -126,7 +200,6 @@ select {
     border: none;
     cursor: pointer;
     transition: all 0.2s ease-in-out;
-    /* [수정] 모든 버튼의 글자색을 검정(text-color)으로 변경 */
     color: var(--text-color);
 }
 
@@ -135,9 +208,7 @@ select {
     box-shadow: none;
 }
 
-/* [수정] Save 버튼 디자인 변경 */
 .btn-primary {
-    /* [수정] 그라데이션 밝기를 낮춤 */
     background: linear-gradient(145deg, #5D9CEC 0%, #46C2CB 100%);
     box-shadow: 0 2px 5px rgba(93, 156, 236, 0.3);
 }
@@ -147,9 +218,7 @@ select {
     transform: translateY(-1px);
 }
 
-/* [수정] Clear API Key 버튼 디자인 변경 */
 .btn-secondary {
-    /* [수정] 밝은 회색 그라데이션 적용 */
     background: linear-gradient(145deg, #f0f2f5 0%, #e6e9ed 100%);
     border: 1px solid var(--border-color);
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);

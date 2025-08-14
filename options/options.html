@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Instant Translate Settings</title>
     <link rel="stylesheet" href="options.css">
-    <!-- Google Fonts 추가 -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&family=Roboto:wght@400;500&display=swap" rel="stylesheet">
@@ -14,12 +13,18 @@
     <div class="wrapper">
         <header>
             <h1>Instant Translate</h1>
-            <!-- [수정] '설정' -> 'Settings' -->
             <p>Settings</p>
         </header>
 
         <main>
             <form id="settings-form">
+                <div class="form-group toggle-group">
+                    <label for="extensionEnabled" class="toggle-label">Enable Extension</label>
+                    <div class="toggle-switch">
+                        <input type="checkbox" id="extensionEnabled" class="toggle-input">
+                        <label for="extensionEnabled" class="toggle-slider"></label>
+                    </div>
+                </div>
                 <div class="form-group">
                     <label for="apiKey">DeepL API Key</label>
                     <input type="password" id="apiKey" placeholder="Your DeepL API Key">
@@ -46,7 +51,6 @@
                 <div id="status" aria-live="polite"></div>
 
                 <div class="button-group">
-                    <!-- [수정] 버튼 텍스트를 영어로 변경 -->
                     <button type="button" id="saveBtn" class="btn btn-primary">Save</button>
                     <button type="button" id="clearBtn" class="btn btn-secondary">Clear API Key</button>
                 </div>
@@ -54,7 +58,6 @@
         </main>
 
         <footer>
-            <!-- [수정] 이메일 링크 추가 -->
             <a href="https://github.com/kjhmoon/instant-translate" target="_blank" rel="noopener noreferrer">GitHub</a>
             <span class="footer-separator">|</span>
             <a href="mailto:kjhmoon06@naver.com">kjhmoon06@naver.com</a>

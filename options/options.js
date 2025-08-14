@@ -1,6 +1,7 @@
 // options.js
 document.addEventListener('DOMContentLoaded', restoreOptions);
 
+const enabledCheckbox = document.getElementById('extensionEnabled');
 const apiKeyInput = document.getElementById('apiKey');
 const targetLangSelect = document.getElementById('targetLang');
 const saveBtn = document.getElementById('saveBtn');
@@ -9,27 +10,37 @@ const statusDiv = document.getElementById('status');
 
 saveBtn.addEventListener('click', saveOptions);
 clearBtn.addEventListener('click', clearOptions);
+enabledCheckbox.addEventListener('change', saveOptions);
 
 function saveOptions() {
+  const isEnabled = enabledCheckbox.checked;
   const apiKey = apiKeyInput.value.trim();
   const targetLang = targetLangSelect.value;
-  chrome.storage.sync.set({ apiKey, targetLang }, () => {
-    // [수정] 상태 메시지를 영어로 변경
-    showStatus('Settings saved.');
+  
+  chrome.storage.sync.set({ isEnabled, apiKey, targetLang }, () => {
+    // 저장 시점에 상태 메시지를 좀 더 명확하게 변경
+    const statusMessage = isEnabled ? 'Settings saved. Extension is On.' : 'Settings saved. Extension is Off.';
+    showStatus(statusMessage);
   });
 }
 
 function restoreOptions() {
-  chrome.storage.sync.get(['apiKey', 'targetLang'], (items) => {
-    if (items.apiKey) apiKeyInput.value = items.apiKey;
-    if (items.targetLang) targetLangSelect.value = items.targetLang;
+  // [수정] chrome.storage.sync.get 호출 시 기본값을 명시적으로 전달합니다.
+  // 이렇게 하면 저장된 값이 없을 때 이 기본값이 사용되어 혼동을 방지합니다.
+  chrome.storage.sync.get({
+    isEnabled: true, // 기본값: 활성화
+    apiKey: '',
+    targetLang: 'EN'
+  }, (items) => {
+    enabledCheckbox.checked = items.isEnabled;
+    apiKeyInput.value = items.apiKey;
+    targetLangSelect.value = items.targetLang;
   });
 }
 
 function clearOptions() {
   apiKeyInput.value = '';
   chrome.storage.sync.remove(['apiKey'], () => {
-    // [수정] 상태 메시지를 영어로 변경
     showStatus('API Key cleared.');
   });
 }
