@@ -1,9 +1,8 @@
 // content-script.js
 (() => {
-  let tooltipHost = null; 
+  let tooltipHost = null;
   let currentShadowRoot = null;
 
-  // ... (tooltipHTML, tooltipCSS, removeExistingTooltip, createTooltip 함수는 이전과 동일) ...
   const tooltipHTML = `
     <div class="tooltip-container" role="dialog" aria-live="polite">
       <div class="tooltip-loader" aria-hidden="true"></div>
@@ -28,6 +27,8 @@
       box-shadow: 0 6px 18px rgba(0,0,0,0.35);
       position: absolute;
       z-index: 2147483647;
+      max-height: 500px;
+      overflow-y: auto;
     }
     .tooltip-loader {
       width: 22px;
@@ -65,40 +66,91 @@
     container.innerHTML = tooltipHTML;
     shadowRoot.appendChild(container);
 
-    const top = rect.bottom + window.scrollY + 8;
-    let left = rect.left + window.scrollX;
-    const viewportWidth = document.documentElement.clientWidth;
-    const estWidth = 360;
-    if (left + estWidth > window.scrollX + viewportWidth) {
-      left = window.scrollX + viewportWidth - estWidth - 12;
+    // --- 강화된 디버깅 및 위치 계산 로직 ---
+    const TOOLTIP_ESTIMATED_WIDTH = 360;
+    const MARGIN = 10;
+    const viewportHeight = window.innerHeight;
+    const viewportWidth = window.innerWidth;
+    const spaceBelow = viewportHeight - rect.bottom;
+    const isTooCloseToBottom = rect.bottom > viewportHeight * 0.8 || spaceBelow < 150;
+    const isSelectionTooTall = rect.height > viewportHeight / 2;
+    const shouldMoveToSide = isTooCloseToBottom || isSelectionTooTall;
+    let finalDecision = '';
+
+    if (shouldMoveToSide) {
+      const spaceRight = viewportWidth - rect.right;
+      const spaceLeft = rect.left;
+      if (spaceRight > spaceLeft && spaceRight > TOOLTIP_ESTIMATED_WIDTH + MARGIN) {
+        finalDecision = 'Place on the RIGHT';
+      } else if (spaceLeft > TOOLTIP_ESTIMATED_WIDTH + MARGIN) {
+        finalDecision = 'Place on the LEFT';
+      } else {
+        finalDecision = 'Place on the RIGHT (Fallback)';
+      }
+    } else {
+      finalDecision = 'Place BELOW';
     }
+
+    // [디버깅] 모든 정보를 담은 객체를 한 번에 출력
+    const debugInfo = {
+      decision: finalDecision,
+      reasoning: {
+        shouldMoveToSide,
+        criterion1_isTooCloseToBottom: isTooCloseToBottom,
+        criterion2_isSelectionTooTall: isSelectionTooTall,
+      },
+      measurements: {
+        viewport: { H: viewportHeight, W: viewportWidth },
+        selectionRect: {
+          top: rect.top,
+          bottom: rect.bottom,
+          left: rect.left,
+          right: rect.right,
+          height: rect.height
+        },
+        calculated: {
+          spaceBelow: spaceBelow
+        }
+      }
+    };
+    console.log('[Instant Translate] Positioning Report:', debugInfo);
+
+    // 위치 적용
+    let top, left;
+    if (shouldMoveToSide) {
+      top = rect.top + window.scrollY;
+      if (finalDecision.includes('RIGHT')) {
+        left = rect.right + window.scrollX + MARGIN;
+      } else { // LEFT
+        left = rect.left + window.scrollX - TOOLTIP_ESTIMATED_WIDTH - MARGIN;
+      }
+    } else { // BELOW
+      top = rect.bottom + window.scrollY + MARGIN;
+      left = rect.left + window.scrollX;
+      if (left + TOOLTIP_ESTIMATED_WIDTH > window.scrollX + viewportWidth) {
+        left = window.scrollX + viewportWidth - TOOLTIP_ESTIMATED_WIDTH - MARGIN;
+      }
+    }
+    
     tooltipHost.style.position = 'absolute';
     tooltipHost.style.top = `${top}px`;
-    tooltipHost.style.left = `${Math.max(left, window.scrollX + 8)}px`;
+    tooltipHost.style.left = `${Math.max(left, window.scrollX + MARGIN)}px`;
     tooltipHost.style.zIndex = 2147483647;
 
     document.body.appendChild(tooltipHost);
     return shadowRoot;
   }
-
+  
   document.addEventListener('mouseup', (ev) => {
-    // [수정] Ctrl 키가 눌리지 않았으면, 번역 로직을 실행하지 않고 즉시 종료합니다.
     if (!ev.ctrlKey) {
       removeExistingTooltip();
       return;
     }
-      
     if (tooltipHost && tooltipHost.contains(ev.target)) {
       return;
     }
-      
     chrome.storage.sync.get({ isEnabled: true }, (settings) => {
-      console.log(`[Instant Translate] 현재 활성화 상태: ${settings.isEnabled}`);
-
-      if (!settings.isEnabled) {
-        return;
-      }
-
+      if (!settings.isEnabled) return;
       try {
         const selection = window.getSelection();
         if (!selection || selection.rangeCount === 0) {
@@ -106,23 +158,18 @@
           return;
         }
         const selectedText = selection.toString().trim();
-
         if (!selectedText) {
           removeExistingTooltip();
           return;
         }
-
         const range = selection.getRangeAt(0);
         const rect = range.getBoundingClientRect();
         if (!rect || (rect.width === 0 && rect.height === 0)) return;
-
         const shadow = createTooltip(rect);
         const contentEl = shadow.querySelector('.tooltip-content');
         const loaderEl = shadow.querySelector('.tooltip-loader');
-
         contentEl.style.display = 'none';
         loaderEl.style.display = 'block';
-
         chrome.runtime.sendMessage({ type: 'TRANSLATE_TEXT', text: selectedText });
       } catch (err) {
         console.error('instant-translate content-script error:', err);
@@ -133,12 +180,10 @@
 
   chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     if (!currentShadowRoot) return;
-
     if (message && message.type === 'TRANSLATION_SKIPPED') {
       removeExistingTooltip();
       return;
     }
-    
     if (message && message.type === 'TRANSLATION_RESULT') {
       const contentEl = currentShadowRoot.querySelector('.tooltip-content');
       const loaderEl = currentShadowRoot.querySelector('.tooltip-loader');
