@@ -6,7 +6,7 @@
   const tooltipHTML = `
     <div class="tooltip-container" role="dialog" aria-live="polite">
       <div class="tooltip-loader" aria-hidden="true"></div>
-      <div class="tooltip-content" style="display: none;"></div>
+      <div class="tooltip-content"></div>
     </div>
   `;
 
@@ -51,9 +51,23 @@
       border-top-color: rgba(255, 255, 255, 0.9);
       animation: spin 0.9s linear infinite;
       display: block;
+      transition: opacity 0.2s ease-in-out;
     }
     @keyframes spin { to { transform: rotate(360deg); } }
-    .tooltip-content { white-space: pre-wrap; word-break: break-word; }
+    .tooltip-content {
+      white-space: pre-wrap;
+      word-break: break-word;
+      opacity: 0;
+      transition: opacity 0.2s ease-in-out;
+      transition-delay: 0.15s; /* 로더가 사라진 후 텍스트가 나타나도록 지연 */
+    }
+    .tooltip-container.loaded .tooltip-loader {
+      opacity: 0;
+      pointer-events: none; /* 애니메이션 후 상호작용 방지 */
+    }
+    .tooltip-container.loaded .tooltip-content {
+      opacity: 1;
+    }
   `;
 
   function removeExistingTooltip() {
@@ -197,11 +211,7 @@
         const range = selection.getRangeAt(0);
         const rect = range.getBoundingClientRect();
         if (!rect || (rect.width === 0 && rect.height === 0)) return;
-        const shadow = createTooltip(rect);
-        const contentEl = shadow.querySelector('.tooltip-content');
-        const loaderEl = shadow.querySelector('.tooltip-loader');
-        contentEl.style.display = 'none';
-        loaderEl.style.display = 'block';
+        createTooltip(rect);
         chrome.runtime.sendMessage({ type: 'TRANSLATE_TEXT', text: selectedText });
       } catch (err) {
         console.error('instant-translate content-script error:', err);
@@ -215,13 +225,14 @@
 
     // 툴팁에 콘텐츠를 표시하는 헬퍼 함수
     const showContent = (text) => {
-      const contentEl = currentShadowRoot.querySelector('.tooltip-content');
-      const loaderEl = currentShadowRoot.querySelector('.tooltip-loader');
-      if (loaderEl) loaderEl.style.display = 'none';
+      const container = currentShadowRoot.querySelector('.tooltip-container');
+      if (!container) return;
+
+      const contentEl = container.querySelector('.tooltip-content');
       if (contentEl) {
-        contentEl.style.display = 'block';
         contentEl.textContent = text;
       }
+      container.classList.add('loaded');
     };
 
     if (message.type === 'TRANSLATION_SKIPPED') {
