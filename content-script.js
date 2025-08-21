@@ -210,28 +210,28 @@
     });
   });
 
-  chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-    if (!currentShadowRoot) return;
-    if (message && message.type === 'TRANSLATION_SKIPPED') {
+  chrome.runtime.onMessage.addListener((message) => {
+    if (!currentShadowRoot || !message) return;
+
+    // 툴팁에 콘텐츠를 표시하는 헬퍼 함수
+    const showContent = (text) => {
+      const contentEl = currentShadowRoot.querySelector('.tooltip-content');
+      const loaderEl = currentShadowRoot.querySelector('.tooltip-loader');
+      if (loaderEl) loaderEl.style.display = 'none';
+      if (contentEl) {
+        contentEl.style.display = 'block';
+        contentEl.textContent = text;
+      }
+    };
+
+    if (message.type === 'TRANSLATION_SKIPPED') {
       removeExistingTooltip();
-      return;
-    }
-    if (message && message.type === 'TRANSLATION_RESULT') {
-      const contentEl = currentShadowRoot.querySelector('.tooltip-content');
-      const loaderEl = currentShadowRoot.querySelector('.tooltip-loader');
-      if (loaderEl) loaderEl.style.display = 'none';
-      if (contentEl) {
-        contentEl.style.display = 'block';
-        contentEl.textContent = message.translation || '[번역 결과 없음]';
-      }
-    } else if (message && message.type === 'TRANSLATION_ERROR') {
-      const contentEl = currentShadowRoot.querySelector('.tooltip-content');
-      const loaderEl = currentShadowRoot.querySelector('.tooltip-loader');
-      if (loaderEl) loaderEl.style.display = 'none';
-      if (contentEl) {
-        contentEl.style.display = 'block';
-        contentEl.textContent = message.error || '번역 중 오류가 발생했습니다.';
-      }
+    } else if (message.type === 'TRANSLATION_BYPASSED') {
+      showContent(message.text); // 원본 텍스트 표시
+    } else if (message.type === 'TRANSLATION_RESULT') {
+      showContent(message.translation || '[번역 결과 없음]');
+    } else if (message.type === 'TRANSLATION_ERROR') {
+      showContent(message.error || '번역 중 오류가 발생했습니다.');
     }
   });
 
