@@ -11,7 +11,11 @@
   `;
 
   const tooltipCSS = `
-    :host { all: initial; }
+    :host {
+      all: initial;
+      --tooltip-transition-duration: 0.2s;
+      --tooltip-transition-timing: ease-in-out;
+    }
     .tooltip-container {
       box-sizing: border-box;
       width: 350px;
@@ -19,24 +23,32 @@
       min-width: 120px;
       padding: 10px 12px;
       border-radius: 8px;
-      background: rgba(32,32,32,0.95);
+      background: rgba(32, 32, 32, 0.95);
       color: #fff;
       font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
       font-size: 13px;
       line-height: 1.3;
-      box-shadow: 0 6px 18px rgba(0,0,0,0.35);
+      box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35);
       position: absolute;
       z-index: 2147483647;
       max-height: 500px;
       overflow-y: auto;
+      opacity: 0;
+      transform: translateY(10px);
+      transition: opacity var(--tooltip-transition-duration) var(--tooltip-transition-timing),
+                  transform var(--tooltip-transition-duration) var(--tooltip-transition-timing);
+    }
+    .tooltip-container.active {
+      opacity: 1;
+      transform: translateY(0);
     }
     .tooltip-loader {
       width: 22px;
       height: 22px;
       border-radius: 50%;
       margin: 6px auto;
-      border: 3px solid rgba(255,255,255,0.15);
-      border-top-color: rgba(255,255,255,0.9);
+      border: 3px solid rgba(255, 255, 255, 0.15);
+      border-top-color: rgba(255, 255, 255, 0.9);
       animation: spin 0.9s linear infinite;
       display: block;
     }
@@ -45,11 +57,22 @@
   `;
 
   function removeExistingTooltip() {
-    if (tooltipHost && tooltipHost.parentNode) {
-      tooltipHost.parentNode.removeChild(tooltipHost);
-    }
+    const hostToRemove = tooltipHost;
+    if (!hostToRemove) return;
+
     tooltipHost = null;
     currentShadowRoot = null;
+
+    const container = hostToRemove.shadowRoot?.querySelector('.tooltip-container');
+
+    if (container) {
+      container.classList.remove('active');
+      container.addEventListener('transitionend', () => {
+        hostToRemove.parentNode?.removeChild(hostToRemove);
+      }, { once: true });
+    } else {
+      hostToRemove.parentNode?.removeChild(hostToRemove);
+    }
   }
 
   function createTooltip(rect) {
@@ -138,6 +161,15 @@
     tooltipHost.style.zIndex = 2147483647;
 
     document.body.appendChild(tooltipHost);
+
+    // Trigger the fade-in animation after the element is in the DOM
+    setTimeout(() => {
+      const container = shadowRoot.querySelector('.tooltip-container');
+      if (container) {
+        container.classList.add('active');
+      }
+    }, 10);
+
     return shadowRoot;
   }
   
