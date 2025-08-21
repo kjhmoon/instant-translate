@@ -186,7 +186,6 @@
 
     return shadowRoot;
   }
-  
   document.addEventListener('mouseup', (ev) => {
     if (!ev.ctrlKey) {
       removeExistingTooltip();
@@ -215,6 +214,41 @@
         chrome.runtime.sendMessage({ type: 'TRANSLATE_TEXT', text: selectedText });
       } catch (err) {
         console.error('instant-translate content-script error:', err);
+        removeExistingTooltip();
+      }
+    });
+  });
+
+  // 1. dblclick 이벤트를 감지하는 새로운 리스너 추가
+  document.addEventListener('dblclick', (ev) => {
+    // 3. 툴팁 내부를 더블클릭했을 때 새로운 툴팁이 생성되지 않도록 방어
+    if (tooltipHost && tooltipHost.contains(ev.target)) {
+      return;
+    }
+
+    chrome.storage.sync.get({ isEnabled: true }, (settings) => {
+      if (!settings.isEnabled) return;
+
+      try {
+        // 2. dblclick 이벤트 핸들러 로직 구현
+        const selection = window.getSelection();
+        if (!selection || selection.rangeCount === 0) {
+          return;
+        }
+
+        const selectedWord = selection.toString().trim();
+        if (!selectedWord) {
+          return;
+        }
+
+        const range = selection.getRangeAt(0);
+        const rect = range.getBoundingClientRect();
+        if (!rect || (rect.width === 0 && rect.height === 0)) return;
+
+        createTooltip(rect);
+        chrome.runtime.sendMessage({ type: 'TRANSLATE_TEXT', text: selectedWord });
+      } catch (err) {
+        console.error('instant-translate content-script error on dblclick:', err);
         removeExistingTooltip();
       }
     });
