@@ -2,6 +2,9 @@
 (() => {
   let tooltipHost = null;
   let currentShadowRoot = null;
+  let anchorElement = null; // 선택된 텍스트를 감쌀 <span> 요소
+  let scrollListener = null; // 스크롤 이벤트 리스너 함수
+  let intersectionObserver = null; // 앵커의 가시성을 감지할 Observer
 
   const tooltipHTML = `
     <div class="tooltip-container" role="dialog" aria-live="polite">
@@ -89,26 +92,48 @@
   `;
 
   function removeExistingTooltip() {
-    const hostToRemove = tooltipHost;
-    if (!hostToRemove) return;
-
-    tooltipHost = null;
-    currentShadowRoot = null;
-
-    const container = hostToRemove.shadowRoot?.querySelector('.tooltip-container');
-
-    if (container) {
-      container.classList.remove('active');
-      container.addEventListener('transitionend', () => {
-        hostToRemove.parentNode?.removeChild(hostToRemove);
-      }, { once: true });
-    } else {
-      hostToRemove.parentNode?.removeChild(hostToRemove);
+    // 1. 이벤트 리스너 및 Observer 해제
+    if (scrollListener) {
+      window.removeEventListener('scroll', scrollListener, true);
+      scrollListener = null;
     }
+    if (intersectionObserver) {
+      intersectionObserver.disconnect();
+      intersectionObserver = null;
+    }
+
+    // 2. 툴팁 요소 제거 (애니메이션 포함)
+    const hostToRemove = tooltipHost;
+    if (hostToRemove) {
+      tooltipHost = null;
+      currentShadowRoot = null;
+      const container = hostToRemove.shadowRoot?.querySelector('.tooltip-container');
+      if (container) {
+        container.classList.remove('active');
+        container.addEventListener('transitionend', () => {
+          hostToRemove.parentNode?.removeChild(hostToRemove);
+        }, { once: true });
+      } else {
+        hostToRemove.parentNode?.removeChild(hostToRemove);
+      }
+    }
+
+    // 3. 앵커(<span>)를 해제하고 원래 DOM 구조로 복원
+    const anchorToRemove = anchorElement;
+    if (anchorToRemove && anchorToRemove.parentNode) {
+      const parent = anchorToRemove.parentNode;
+      // <span> 안의 모든 자식 노드(주로 텍스트 노드)를 <span> 밖으로 이동
+      while (anchorToRemove.firstChild) {
+        parent.insertBefore(anchorToRemove.firstChild, anchorToRemove);
+      }
+      // 비어있는 <span> 제거
+      parent.removeChild(anchorToRemove);
+      parent.normalize(); // 분리된 텍스트 노드를 병합하여 DOM을 깨끗하게 정리
+    }
+    anchorElement = null;
   }
 
-  function createTooltip(rect, type = 'word') {
-    removeExistingTooltip();
+  function createTooltip(type = 'word') {
     tooltipHost = document.createElement('div');
     const shadowRoot = tooltipHost.attachShadow({ mode: 'open' });
     currentShadowRoot = shadowRoot;
@@ -125,6 +150,29 @@
     if (tooltipContainer && type === 'sentence') {
       tooltipContainer.classList.add('is-sentence');
     }
+
+    tooltipHost.style.position = 'absolute';
+    tooltipHost.style.zIndex = 2147483647;
+
+    document.body.appendChild(tooltipHost);
+
+    setTimeout(() => {
+      const activeContainer = shadowRoot.querySelector('.tooltip-container');
+      if (activeContainer) {
+        activeContainer.classList.add('active');
+      }
+    }, 10);
+
+    return shadowRoot;
+  }
+
+  /**
+   * 툴팁의 위치를 지정된 사각형(rect)에 따라 계산하고 적용합니다.
+   * @param {DOMRect} rect - 위치의 기준이 될 DOMRect 객체 (anchorElement.getBoundingClientRect())
+   * @param {boolean} isInitial - 최초 호출 여부 (디버그 로그 출력 제어용)
+   */
+  function positionTooltipAtRect(rect, isInitial = false) {
+    if (!tooltipHost) return;
 
     const TOOLTIP_ESTIMATED_WIDTH = 360;
     const MARGIN = 10;
@@ -150,13 +198,15 @@
       finalDecision = 'Place BELOW';
     }
 
-    const debugInfo = {
-      decision: finalDecision,
-      reasoning: { shouldMoveToSide, criterion1_isTooCloseToBottom: isTooCloseToBottom, criterion2_isSelectionTooTall: isSelectionTooTall, },
-      measurements: { viewport: { H: viewportHeight, W: viewportWidth }, selectionRect: { top: rect.top, bottom: rect.bottom, left: rect.left, right: rect.right, height: rect.height }, calculated: { spaceBelow: spaceBelow } }
-    };
-    console.log('[Instant Translate] Positioning Report:', debugInfo);
-
+    if (isInitial) {
+      const debugInfo = {
+        decision: finalDecision,
+        reasoning: { shouldMoveToSide, criterion1_isTooCloseToBottom: isTooCloseToBottom, criterion2_isSelectionTooTall: isSelectionTooTall, },
+        measurements: { viewport: { H: viewportHeight, W: viewportWidth }, selectionRect: { top: rect.top, bottom: rect.bottom, left: rect.left, right: rect.right, height: rect.height }, calculated: { spaceBelow: spaceBelow } }
+      };
+      console.log('[Instant Translate] Positioning Report:', debugInfo);
+    }
+    
     let top, left;
     if (shouldMoveToSide) {
       top = rect.top + window.scrollY;
@@ -173,21 +223,8 @@
       }
     }
     
-    tooltipHost.style.position = 'absolute';
     tooltipHost.style.top = `${top}px`;
     tooltipHost.style.left = `${Math.max(left, window.scrollX + MARGIN)}px`;
-    tooltipHost.style.zIndex = 2147483647;
-
-    document.body.appendChild(tooltipHost);
-
-    setTimeout(() => {
-      const activeContainer = shadowRoot.querySelector('.tooltip-container');
-      if (activeContainer) {
-        activeContainer.classList.add('active');
-      }
-    }, 10);
-
-    return shadowRoot;
   }
 
   document.addEventListener('mouseup', (ev) => {
@@ -198,25 +235,63 @@
     if (tooltipHost && tooltipHost.contains(ev.target)) {
       return;
     }
+
+    // 기존 툴팁이 있다면 먼저 정리
+    removeExistingTooltip();
+
     chrome.storage.sync.get({ isEnabled: true }, (settings) => {
       if (!settings.isEnabled) return;
       try {
         const selection = window.getSelection();
-        if (!selection || selection.rangeCount === 0) {
-          removeExistingTooltip();
-          return;
-        }
+        if (!selection || selection.rangeCount === 0) return;
+
         const selectedText = selection.toString().trim();
-        if (!selectedText) {
-          removeExistingTooltip();
+        if (!selectedText) return;
+        
+        const range = selection.getRangeAt(0);
+
+        // 1. 앵커(<span>) 생성 및 선택 영역 감싸기
+        anchorElement = document.createElement('span');
+        anchorElement.style.all = 'unset'; 
+        try {
+          range.surroundContents(anchorElement);
+        } catch (e) {
+          console.warn("Instant Translate: Could not wrap the selected range, it might cross element boundaries.", e);
+          anchorElement = null; // 앵커 생성 실패 시 초기화
           return;
         }
-        const range = selection.getRangeAt(0);
-        const rect = range.getBoundingClientRect();
-        if (!rect || (rect.width === 0 && rect.height === 0)) return;
+
+        const rect = anchorElement.getBoundingClientRect();
+        if (!rect || (rect.width === 0 && rect.height === 0)) {
+          removeExistingTooltip(); // 유효하지 않은 영역이면 정리 후 종료
+          return;
+        }
         
-        createTooltip(rect, 'sentence');
+        // 2. 툴팁 생성, 위치 지정, 번역 요청
+        createTooltip('sentence');
+        positionTooltipAtRect(rect, true);
         chrome.runtime.sendMessage({ type: 'TRANSLATE_TEXT', text: selectedText });
+
+        // 3. 스크롤 추적 리스너 정의 및 등록
+        scrollListener = () => {
+          if (!anchorElement) return;
+          const newRect = anchorElement.getBoundingClientRect();
+          positionTooltipAtRect(newRect);
+        };
+        window.addEventListener('scroll', scrollListener, { capture: true, passive: true });
+
+        // 4. Intersection Observer 등록 (자동 닫기 기능)
+        intersectionObserver = new IntersectionObserver((entries) => {
+          entries.forEach(entry => {
+            // isIntersecting이 false이면, 앵커가 화면에서 사라졌다는 의미
+            if (!entry.isIntersecting) {
+              removeExistingTooltip();
+            }
+          });
+        }, { threshold: 0 }); // threshold: 0은 1px이라도 보이면 intersecting으로 간주
+
+        intersectionObserver.observe(anchorElement);
+        
       } catch (err) {
         console.error('instant-translate content-script error:', err);
         removeExistingTooltip();
@@ -228,6 +303,10 @@
     if (tooltipHost && tooltipHost.contains(ev.target)) {
       return;
     }
+
+    // 기존 툴팁이 있다면 먼저 정리
+    removeExistingTooltip();
+
     chrome.storage.sync.get({ isEnabled: true }, (settings) => {
       if (!settings.isEnabled) return;
       try {
@@ -236,11 +315,48 @@
         const selectedWord = selection.toString().trim();
         if (!selectedWord) { return; }
         const range = selection.getRangeAt(0);
-        const rect = range.getBoundingClientRect();
-        if (!rect || (rect.width === 0 && rect.height === 0)) return;
 
-        createTooltip(rect, 'word');
+        // 1. 앵커(<span>) 생성 및 선택 영역 감싸기
+        anchorElement = document.createElement('span');
+        anchorElement.style.all = 'unset';
+        try {
+          range.surroundContents(anchorElement);
+        } catch (e) {
+          console.warn("Instant Translate: Could not wrap the selected range, it might cross element boundaries.", e);
+          anchorElement = null;
+          return;
+        }
+
+        const rect = anchorElement.getBoundingClientRect();
+        if (!rect || (rect.width === 0 && rect.height === 0)) {
+          removeExistingTooltip();
+          return;
+        }
+
+        // 2. 툴팁 생성, 위치 지정, 번역 요청
+        createTooltip('word');
+        positionTooltipAtRect(rect, true);
         chrome.runtime.sendMessage({ type: 'TRANSLATE_TEXT', text: selectedWord });
+
+        // 3. 스크롤 추적 리스너 정의 및 등록
+        scrollListener = () => {
+          if (!anchorElement) return;
+          const newRect = anchorElement.getBoundingClientRect();
+          positionTooltipAtRect(newRect);
+        };
+        window.addEventListener('scroll', scrollListener, { capture: true, passive: true });
+
+        // 4. Intersection Observer 등록 (자동 닫기 기능)
+        intersectionObserver = new IntersectionObserver((entries) => {
+          entries.forEach(entry => {
+            if (!entry.isIntersecting) {
+              removeExistingTooltip();
+            }
+          });
+        }, { threshold: 0 });
+
+        intersectionObserver.observe(anchorElement);
+
       } catch (err) {
         console.error('instant-translate content-script error on dblclick:', err);
         removeExistingTooltip();
