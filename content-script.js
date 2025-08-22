@@ -5,6 +5,10 @@
   let anchorElement = null; // 선택된 텍스트를 감쌀 <span> 요소
   let scrollListener = null; // 스크롤 이벤트 리스너 함수
   let intersectionObserver = null; // 앵커의 가시성을 감지할 Observer
+  // --- [추가] 시작 ---
+  let translationIcon = null; // 번역 아이콘 DOM 요소를 저장할 변수
+  let lastSelectionRange = null; // 아이콘 클릭 시 사용할 마지막 선택 영역 정보
+  // --- [추가] 끝 ---
 
   const tooltipHTML = `
     <div class="tooltip-container" role="dialog" aria-live="polite">
@@ -133,6 +137,95 @@
     anchorElement = null;
   }
 
+  // --- [추가] 아이콘 관련 함수 ---
+  function removeTranslationIcon() {
+    if (translationIcon) {
+      const iconToRemove = translationIcon;
+      translationIcon = null; // 재진입 방지를 위해 즉시 null로 설정
+      // 애니메이션을 위해 opacity를 먼저 변경하고 transitionend 후 DOM에서 제거
+      iconToRemove.style.opacity = '0';
+      iconToRemove.addEventListener('transitionend', () => {
+        iconToRemove.remove();
+      }, { once: true });
+    }
+    lastSelectionRange = null;
+  }
+
+  function handleIconClick(ev) {
+    ev.stopPropagation(); // 페이지의 다른 이벤트에 영향 주지 않도록 함
+
+    if (!lastSelectionRange) return;
+
+    // 기존의 앵커 기반 번역 실행 로직을 재사용하여 스크롤 추적 기능 보장
+    startTranslationProcess(lastSelectionRange, 'sentence');
+
+    // 번역이 시작되면 아이콘은 제거
+    removeTranslationIcon();
+  }
+
+  function createTranslationIcon(range) {
+    // 아이콘 표시 전, 기존 툴팁과 아이콘이 있다면 모두 정리
+    removeExistingTooltip();
+    removeTranslationIcon();
+
+    // 1. 선택 영역의 '끝 지점' 좌표를 정밀하게 계산
+    const endRange = range.cloneRange();
+    endRange.collapse(false); // Range를 끝 지점으로 축소
+    const endRect = endRange.getBoundingClientRect();
+
+    // 2. 마지막 선택 영역 정보 저장
+    lastSelectionRange = range;
+
+    // 3. 아이콘 컨테이너(div)와 이미지(img) 생성
+    translationIcon = document.createElement('div');
+    const iconImg = document.createElement('img');
+
+    // chrome.runtime.getURL을 통해 확장 프로그램 내부 리소스 경로를 가져옴
+    iconImg.src = chrome.runtime.getURL('icons/icon16.png');
+
+    // 4. 아이콘 스타일링
+    iconImg.style.cssText = `
+      width: 16px;
+      height: 16px;
+    `;
+    translationIcon.style.cssText = `
+      position: absolute;
+      z-index: 2147483646;
+      width: 28px;
+      height: 28px;
+      background-color: #ffffff;
+      border: 1px solid #e0e0e0;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+      transition: opacity 0.15s ease-in-out;
+      opacity: 0;
+    `;
+
+    // 5. 아이콘 위치 설정 (계산된 끝 지점 기준)
+    // [수정] top 계산 방식을 bottom 기준에서 top 기준으로 변경하여 아이콘을 위로 올립니다.
+    const iconHeight = 28; // 아이콘의 높이
+    const top = endRect.top + window.scrollY - (iconHeight / 2) + (endRect.height / 2);
+    const left = endRect.right + window.scrollX + 5; // 약간 오른쪽으로 이동
+    translationIcon.style.top = `${top}px`;
+    translationIcon.style.left = `${left}px`;
+
+    // 6. DOM에 추가 및 이벤트 리스너 바인딩
+    translationIcon.appendChild(iconImg);
+    document.body.appendChild(translationIcon);
+
+    // 부드럽게 나타나는 애니메이션
+    setTimeout(() => {
+      if (translationIcon) translationIcon.style.opacity = '1';
+    }, 10);
+
+    translationIcon.addEventListener('click', handleIconClick, { once: true });
+  }
+  // --- [추가] 끝 ---
+
   function createTooltip(type = 'word') {
     tooltipHost = document.createElement('div');
     const shadowRoot = tooltipHost.attachShadow({ mode: 'open' });
@@ -227,75 +320,108 @@
     tooltipHost.style.left = `${Math.max(left, window.scrollX + MARGIN)}px`;
   }
 
-  document.addEventListener('mouseup', (ev) => {
-    if (!ev.ctrlKey) {
-      removeExistingTooltip();
-      return;
-    }
-    if (tooltipHost && tooltipHost.contains(ev.target)) {
-      return;
-    }
-
-    // 기존 툴팁이 있다면 먼저 정리
+  function startTranslationProcess(range, type = 'sentence') {
+    // 1. 이전 상태 정리 (새로운 번역 시작 전)
     removeExistingTooltip();
 
+    try {
+      const selectedText = range.toString().trim();
+      if (!selectedText) return;
+
+      // 2. 앵커(<span>) 생성 및 선택 영역 감싸기
+      anchorElement = document.createElement('span');
+      anchorElement.style.all = 'unset';
+      try {
+        range.surroundContents(anchorElement);
+      } catch (e) {
+        console.warn("Instant Translate: Could not wrap the selected range, it might cross element boundaries.", e);
+        anchorElement = null; // 앵커 생성 실패 시 초기화
+        return;
+      }
+
+      const rect = anchorElement.getBoundingClientRect();
+      if (!rect || (rect.width === 0 && rect.height === 0)) {
+        removeExistingTooltip(); // 유효하지 않은 영역이면 정리 후 종료
+        return;
+      }
+
+      // 3. 툴팁 생성, 위치 지정, 번역 요청
+      createTooltip(type);
+      positionTooltipAtRect(rect, true);
+      chrome.runtime.sendMessage({ type: 'TRANSLATE_TEXT', text: selectedText });
+
+      // 4. 스크롤 추적 및 자동 닫기 리스너 등록
+      scrollListener = () => {
+        if (!anchorElement) return;
+        const newRect = anchorElement.getBoundingClientRect();
+        positionTooltipAtRect(newRect);
+      };
+      window.addEventListener('scroll', scrollListener, { capture: true, passive: true });
+
+      intersectionObserver = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+          if (!entry.isIntersecting) {
+            removeExistingTooltip();
+          }
+        });
+      }, { threshold: 0 });
+      intersectionObserver.observe(anchorElement);
+
+    } catch (err) {
+      console.error('instant-translate content-script error:', err);
+      removeExistingTooltip();
+    }
+  }
+
+  document.addEventListener('mouseup', (ev) => {
+    // 아이콘이나 툴팁 내부를 클릭한 경우는 무시
+    if ((tooltipHost && tooltipHost.contains(ev.target)) || (translationIcon && translationIcon.contains(ev.target))) {
+      return;
+    }
+
+    // Ctrl 키가 눌렸을 경우: 즉시 번역 실행
+    if (ev.ctrlKey) {
+      removeTranslationIcon(); // 아이콘이 있었다면 제거
+      chrome.storage.sync.get({ isEnabled: true }, (settings) => {
+        if (!settings.isEnabled) return;
+        const selection = window.getSelection();
+        if (!selection || selection.rangeCount === 0) {
+          removeExistingTooltip();
+          return;
+        }
+        startTranslationProcess(selection.getRangeAt(0), 'sentence');
+      });
+      return;
+    }
+
+    // 더블클릭인 경우(ev.detail > 1), 아이콘을 표시하지 않고 종료
+    // (어차피 dblclick 이벤트 핸들러가 즉시 번역을 처리할 것임)
+    if (ev.detail > 1) {
+      removeTranslationIcon();
+      return;
+    }
+
+    // 위의 모든 조건에 해당하지 않는 '일반 드래그 선택'의 경우:
     chrome.storage.sync.get({ isEnabled: true }, (settings) => {
       if (!settings.isEnabled) return;
-      try {
+
+      // 드래그가 끝난 후 selection 객체가 안정화될 시간을 주기 위해 짧은 지연 추가
+      setTimeout(() => {
         const selection = window.getSelection();
-        if (!selection || selection.rangeCount === 0) return;
-
+        // isCollapsed는 선택 영역이 없이 커서만 있는 상태(클릭)를 의미
+        if (!selection || selection.isCollapsed || selection.rangeCount === 0) {
+          removeTranslationIcon();
+          return;
+        }
         const selectedText = selection.toString().trim();
-        if (!selectedText) return;
-        
-        const range = selection.getRangeAt(0);
-
-        // 1. 앵커(<span>) 생성 및 선택 영역 감싸기
-        anchorElement = document.createElement('span');
-        anchorElement.style.all = 'unset'; 
-        try {
-          range.surroundContents(anchorElement);
-        } catch (e) {
-          console.warn("Instant Translate: Could not wrap the selected range, it might cross element boundaries.", e);
-          anchorElement = null; // 앵커 생성 실패 시 초기화
+        if (!selectedText) {
+          removeTranslationIcon();
           return;
         }
 
-        const rect = anchorElement.getBoundingClientRect();
-        if (!rect || (rect.width === 0 && rect.height === 0)) {
-          removeExistingTooltip(); // 유효하지 않은 영역이면 정리 후 종료
-          return;
-        }
-        
-        // 2. 툴팁 생성, 위치 지정, 번역 요청
-        createTooltip('sentence');
-        positionTooltipAtRect(rect, true);
-        chrome.runtime.sendMessage({ type: 'TRANSLATE_TEXT', text: selectedText });
-
-        // 3. 스크롤 추적 리스너 정의 및 등록
-        scrollListener = () => {
-          if (!anchorElement) return;
-          const newRect = anchorElement.getBoundingClientRect();
-          positionTooltipAtRect(newRect);
-        };
-        window.addEventListener('scroll', scrollListener, { capture: true, passive: true });
-
-        // 4. Intersection Observer 등록 (자동 닫기 기능)
-        intersectionObserver = new IntersectionObserver((entries) => {
-          entries.forEach(entry => {
-            // isIntersecting이 false이면, 앵커가 화면에서 사라졌다는 의미
-            if (!entry.isIntersecting) {
-              removeExistingTooltip();
-            }
-          });
-        }, { threshold: 0 }); // threshold: 0은 1px이라도 보이면 intersecting으로 간주
-
-        intersectionObserver.observe(anchorElement);
-        
-      } catch (err) {
-        console.error('instant-translate content-script error:', err);
-        removeExistingTooltip();
-      }
+        // 유효한 텍스트가 선택되었다면 번역 아이콘 생성
+        createTranslationIcon(selection.getRangeAt(0));
+      }, 10);
     });
   });
 
@@ -304,9 +430,7 @@
       return;
     }
 
-    // 기존 툴팁이 있다면 먼저 정리
-    removeExistingTooltip();
-
+    removeTranslationIcon(); // 더블클릭 시 아이콘이 혹시 남아있다면 제거
     chrome.storage.sync.get({ isEnabled: true }, (settings) => {
       if (!settings.isEnabled) return;
       try {
@@ -314,49 +438,7 @@
         if (!selection || selection.rangeCount === 0) { return; }
         const selectedWord = selection.toString().trim();
         if (!selectedWord) { return; }
-        const range = selection.getRangeAt(0);
-
-        // 1. 앵커(<span>) 생성 및 선택 영역 감싸기
-        anchorElement = document.createElement('span');
-        anchorElement.style.all = 'unset';
-        try {
-          range.surroundContents(anchorElement);
-        } catch (e) {
-          console.warn("Instant Translate: Could not wrap the selected range, it might cross element boundaries.", e);
-          anchorElement = null;
-          return;
-        }
-
-        const rect = anchorElement.getBoundingClientRect();
-        if (!rect || (rect.width === 0 && rect.height === 0)) {
-          removeExistingTooltip();
-          return;
-        }
-
-        // 2. 툴팁 생성, 위치 지정, 번역 요청
-        createTooltip('word');
-        positionTooltipAtRect(rect, true);
-        chrome.runtime.sendMessage({ type: 'TRANSLATE_TEXT', text: selectedWord });
-
-        // 3. 스크롤 추적 리스너 정의 및 등록
-        scrollListener = () => {
-          if (!anchorElement) return;
-          const newRect = anchorElement.getBoundingClientRect();
-          positionTooltipAtRect(newRect);
-        };
-        window.addEventListener('scroll', scrollListener, { capture: true, passive: true });
-
-        // 4. Intersection Observer 등록 (자동 닫기 기능)
-        intersectionObserver = new IntersectionObserver((entries) => {
-          entries.forEach(entry => {
-            if (!entry.isIntersecting) {
-              removeExistingTooltip();
-            }
-          });
-        }, { threshold: 0 });
-
-        intersectionObserver.observe(anchorElement);
-
+        startTranslationProcess(selection.getRangeAt(0), 'word');
       } catch (err) {
         console.error('instant-translate content-script error on dblclick:', err);
         removeExistingTooltip();
@@ -387,6 +469,29 @@
   });
 
   document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape') removeExistingTooltip();
+    if (e.key === 'Escape') {
+      removeExistingTooltip();
+      removeTranslationIcon();
+    }
   });
+
+  // 페이지 다른 곳을 클릭(mousedown)하면 아이콘 제거
+  document.addEventListener('mousedown', (ev) => {
+    if (translationIcon && !translationIcon.contains(ev.target)) {
+      removeTranslationIcon();
+    }
+  }, true);
+
+  // --- [추가] 툴팁 외부를 클릭하면 툴팁을 제거하는 리스너 ---
+  document.addEventListener('mousedown', (ev) => {
+    // 툴팁이 존재하고, 클릭한 대상이 툴팁 자신이 아닐 경우
+    if (tooltipHost && !tooltipHost.contains(ev.target)) {
+      // 하지만 만약 아이콘을 클릭한 것이라면, 툴팁을 바로 닫지 않도록 예외 처리
+      if (translationIcon && translationIcon.contains(ev.target)) {
+        return;
+      }
+      removeExistingTooltip();
+    }
+  }, true); // capture phase에서 이벤트를 처리하여 다른 이벤트보다 먼저 실행되도록 함
+
 })();
