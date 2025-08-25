@@ -67,11 +67,17 @@ function showStatus(msg) {
 }
 
 function initializeEventListeners() {
-  // 기본 옵션 저장/초기화 버튼 이벤트 리스너
+  // 수동 저장 버튼
   saveBtn.addEventListener('click', saveOptions);
+  
+  // API 키 초기화 버튼
   clearBtn.addEventListener('click', clearOptions);
+
+  // 자동 저장을 위한 이벤트 리스너
   enabledCheckbox.addEventListener('change', saveOptions);
   darkModeEnabled.addEventListener('change', saveOptions);
+  apiKeyInput.addEventListener('change', saveOptions); // API 키 입력 필드
+  targetLangSelect.addEventListener('change', saveOptions); // 언어 선택 드롭다운
 
   // 문의/피드백 링크 이벤트 리스너
   const contactLink = document.getElementById('contact-link');
