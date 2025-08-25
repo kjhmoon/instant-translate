@@ -44,10 +44,13 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       const detectedLang = translationResult.detected_source_language;
       const translatedText = translationResult.text;
       
-      // [추가] 감지된 언어와 목표 언어가 동일하면 툴팁을 닫도록 메시지 전송
+      // [수정] 감지된 언어와 목표 언어가 동일하면 안내 메시지를 포함하여 메시지 전송
       if (detectedLang.toUpperCase() === targetLang.toUpperCase()) {
         if (tabId != null) {
-          chrome.tabs.sendMessage(tabId, { type: 'TRANSLATION_SKIPPED' });
+          chrome.tabs.sendMessage(tabId, { 
+            type: 'TRANSLATION_BYPASSED',
+            text: 'Translation is not performed because it is the same as the target language. Please change the target language.'
+          });
         }
         return; // 번역 결과를 보내지 않고 종료
       }

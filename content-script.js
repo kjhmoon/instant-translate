@@ -8,7 +8,7 @@
   // --- [추가] 시작 ---
   let translationIcon = null; // 번역 아이콘 DOM 요소를 저장할 변수
   let lastSelectionRange = null; // 아이콘 클릭 시 사용할 마지막 선택 영역 정보
-  // --- [추가] 끝 ---
+  // --- [추가] 끝 --
 
   const tooltipHTML = `
     <div class="tooltip-container" role="dialog" aria-live="polite">
@@ -448,7 +448,8 @@
 
   chrome.runtime.onMessage.addListener((message) => {
     if (!currentShadowRoot || !message) return;
-    const showContent = (text) => {
+    
+    const showContent = (text, isFinalState = false) => {
       const container = currentShadowRoot.querySelector('.tooltip-container');
       if (!container) return;
       const contentEl = container.querySelector('.tooltip-content');
@@ -456,15 +457,21 @@
         contentEl.textContent = text;
       }
       container.classList.add('loaded');
+
+      // [수정] 오류나 언어 동일 메시지 등 최종 상태에서는 더 이상 앵커를 추적할 필요가 없으므로 Observer를 해제합니다.
+      if (isFinalState && intersectionObserver) {
+        intersectionObserver.disconnect();
+      }
     };
+
     if (message.type === 'TRANSLATION_SKIPPED') {
       removeExistingTooltip();
     } else if (message.type === 'TRANSLATION_BYPASSED') {
-      showContent(message.text);
+      showContent(message.text, true); // isFinalState를 true로 전달
     } else if (message.type === 'TRANSLATION_RESULT') {
       showContent(message.translation || '[번역 결과 없음]');
     } else if (message.type === 'TRANSLATION_ERROR') {
-      showContent(message.error || '번역 중 오류가 발생했습니다.');
+      showContent(message.error || '번역 중 오류가 발생했습니다.', true); // isFinalState를 true로 전달
     }
   });
 
