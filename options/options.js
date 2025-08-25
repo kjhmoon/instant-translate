@@ -6,21 +6,32 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 const enabledCheckbox = document.getElementById('extensionEnabled');
+const darkModeEnabled = document.getElementById('darkModeEnabled');
 const apiKeyInput = document.getElementById('apiKey');
 const targetLangSelect = document.getElementById('targetLang');
 const saveBtn = document.getElementById('saveBtn');
 const clearBtn = document.getElementById('clearBtn');
 const statusDiv = document.getElementById('status');
 
+function applyDarkMode(isDark) {
+  if (isDark) {
+    document.body.classList.add('dark-mode');
+  } else {
+    document.body.classList.remove('dark-mode');
+  }
+}
+
 function saveOptions() {
   const isEnabled = enabledCheckbox.checked;
+  const isDarkMode = darkModeEnabled.checked;
   const apiKey = apiKeyInput.value.trim();
   const targetLang = targetLangSelect.value;
   
-  chrome.storage.sync.set({ isEnabled, apiKey, targetLang }, () => {
+  chrome.storage.sync.set({ isEnabled, isDarkMode, apiKey, targetLang }, () => {
     // 저장 시점에 상태 메시지를 좀 더 명확하게 변경
     const statusMessage = isEnabled ? 'Settings saved. Extension is On.' : 'Settings saved. Extension is Off.';
     showStatus(statusMessage);
+    applyDarkMode(isDarkMode); // Save and apply theme immediately
   });
 }
 
@@ -29,12 +40,17 @@ function restoreOptions() {
   // 이렇게 하면 저장된 값이 없을 때 이 기본값이 사용되어 혼동을 방지합니다.
   chrome.storage.sync.get({
     isEnabled: true, // 기본값: 활성화
+    isDarkMode: false, // 기본값: 다크 모드 비활성화
     apiKey: '',
     targetLang: 'EN'
   }, (items) => {
     enabledCheckbox.checked = items.isEnabled;
+    darkModeEnabled.checked = items.isDarkMode;
     apiKeyInput.value = items.apiKey;
     targetLangSelect.value = items.targetLang;
+
+    // 저장된 테마 적용
+    applyDarkMode(items.isDarkMode);
   });
 }
 
@@ -55,6 +71,7 @@ function initializeEventListeners() {
   saveBtn.addEventListener('click', saveOptions);
   clearBtn.addEventListener('click', clearOptions);
   enabledCheckbox.addEventListener('change', saveOptions);
+  darkModeEnabled.addEventListener('change', saveOptions);
 
   // 문의/피드백 링크 이벤트 리스너
   const contactLink = document.getElementById('contact-link');

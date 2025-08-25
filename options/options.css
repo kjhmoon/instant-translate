@@ -1,5 +1,6 @@
 /* options.css */
 :root {
+  /* Light Mode Colors */
   --primary-color: #3898F3;
   --primary-color-hover: #2f80ed;
   --background-color: #f8f9fa;
@@ -10,6 +11,20 @@
   --button-secondary-bg: #f1f3f4;
   --toggle-bg-off: #d3d3d3;
   --toggle-bg-on: #34c759;
+  --input-background-color: #fff;
+
+  /* Dark Mode Colors */
+  --dark-primary-color: #4da6ff;
+  --dark-primary-color-hover: #66b3ff;
+  --dark-background-color: #121212;
+  --dark-card-background-color: #1e1e1e;
+  --dark-text-color: #e0e0e0;
+  --dark-subtle-text-color: #a0a0a0;
+  --dark-border-color: #3a3a3a;
+  --dark-button-secondary-bg: #333333;
+  --dark-toggle-bg-off: #555;
+  --dark-toggle-bg-on: #00c853;
+  --dark-input-background-color: #2c2c2c;
 }
 
 html {
@@ -30,6 +45,21 @@ body {
   overflow: hidden;
   border: none;
   outline: none;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+body.dark-mode {
+    --primary-color: var(--dark-primary-color);
+    --primary-color-hover: var(--dark-primary-color-hover);
+    --background-color: var(--dark-background-color);
+    --card-background-color: var(--dark-card-background-color);
+    --text-color: var(--dark-text-color);
+    --subtle-text-color: var(--dark-subtle-text-color);
+    --border-color: var(--dark-border-color);
+    --button-secondary-bg: var(--dark-button-secondary-bg);
+    --toggle-bg-off: var(--dark-toggle-bg-off);
+    --toggle-bg-on: var(--dark-toggle-bg-on);
+    --input-background-color: var(--dark-input-background-color);
 }
 
 .wrapper {
@@ -41,12 +71,14 @@ body {
   box-sizing: border-box;
   backdrop-filter: blur(20px);
   border: 1px solid rgba(255, 255, 255, 0.2);
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 header {
     text-align: center;
     padding: 28px 24px 20px;
     border-bottom: 1px solid var(--border-color);
+    transition: border-color 0.3s ease;
 }
 
 header h1 {
@@ -54,12 +86,14 @@ header h1 {
     font-size: 24px;
     font-weight: 700;
     color: var(--text-color);
+    transition: color 0.3s ease;
 }
 
 header p {
     margin: 4px 0 0;
     font-size: 15px;
     color: var(--subtle-text-color);
+    transition: color 0.3s ease;
 }
 
 main {
@@ -78,6 +112,7 @@ main {
     padding: 8px 4px;
     border-bottom: 1px solid var(--border-color);
     margin-bottom: 24px;
+    transition: border-color 0.3s ease;
 }
 
 .toggle-label {
@@ -148,6 +183,7 @@ label {
     font-weight: 500;
     margin-bottom: 8px;
     color: var(--text-color);
+    transition: color 0.3s ease;
 }
 
 input[type="password"],
@@ -157,9 +193,10 @@ select {
     font-size: 14px;
     border: 1px solid var(--border-color);
     border-radius: 10px; 
-    background-color: #fff;
+    background-color: var(--input-background-color);
+    color: var(--text-color);
     box-sizing: border-box;
-    transition: border-color 0.2s, box-shadow 0.2s;
+    transition: border-color 0.2s, box-shadow 0.2s, background-color 0.3s ease, color 0.3s ease;
 }
 
 input[type="password"]:focus,
@@ -182,6 +219,7 @@ select:focus {
     top: 50%;
     transform: translateY(-50%);
     pointer-events: none;
+    transition: color 0.3s ease;
 }
 
 select {
@@ -231,9 +269,10 @@ select {
 }
 
 .btn-secondary {
-    background: linear-gradient(145deg, #f0f2f5 0%, #e6e9ed 100%);
+    background: var(--button-secondary-bg);
     border: 1px solid var(--border-color);
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+    transition: background-color 0.3s ease, border-color 0.3s ease, transform 0.2s ease, box-shadow 0.2s ease;
 }
 
 .btn-secondary:hover {
@@ -243,10 +282,27 @@ select {
     box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
 }
 
+body.dark-mode .btn-secondary {
+    background: var(--dark-button-secondary-bg);
+    border-color: var(--dark-border-color);
+    color: var(--dark-text-color);
+}
+
+body.dark-mode .btn-secondary:hover {
+    background-color: #444;
+    border-color: #555;
+}
+
 footer {
     text-align: center;
     padding: 20px;
     background-color: var(--background-color);
+    transition: background-color 0.3s ease;
+}
+
+footer p {
+    color: var(--subtle-text-color);
+    transition: color 0.3s ease;
 }
 
 footer a {
