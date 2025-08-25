@@ -467,7 +467,16 @@
     if (message.type === 'TRANSLATION_SKIPPED') {
       removeExistingTooltip();
     } else if (message.type === 'TRANSLATION_BYPASSED') {
-      showContent(message.text, true); // isFinalState를 true로 전달
+      // 1. 현재 툴팁 컨테이너를 찾는다.
+      const container = currentShadowRoot.querySelector('.tooltip-container');
+      
+      // 2. 컨테이너가 존재하고, 아직 is-sentence 클래스가 없다면 추가한다.
+      if (container && !container.classList.contains('is-sentence')) {
+          container.classList.add('is-sentence');
+      }
+
+      // 3. 이제 넓어진 툴팁에 경고 메시지를 표시한다.
+      showContent(message.text, true);
     } else if (message.type === 'TRANSLATION_RESULT') {
       showContent(message.translation || '[번역 결과 없음]');
     } else if (message.type === 'TRANSLATION_ERROR') {
