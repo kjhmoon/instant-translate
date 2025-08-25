@@ -8,6 +8,21 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&family=Roboto:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        /* 링크 스타일 정의 */
+        #contact-link {
+            color: dodgerblue;
+            text-decoration: none; /* 기본 상태에서는 밑줄 없음 */
+            cursor: pointer;
+            transition: color 0.2s ease-in-out; /* 부드러운 색상 전환 효과 */
+        }
+
+        /* 마우스를 올렸을 때의 스타일 (hover) */
+        #contact-link:hover {
+            color: mediumblue; /* 약간 더 어두운 파란색 */
+            text-decoration: underline; /* 밑줄 표시 */
+        }
+    </style>
 </head>
 <body>
     <div class="wrapper">
@@ -58,11 +73,21 @@
         </main>
 
         <footer>
-            <a href="https://github.com/kjhmoon/instant-translate" target="_blank" rel="noopener noreferrer">GitHub</a>
-            <span class="footer-separator">|</span>
-            <a href="mailto:kjhmoon06@naver.com">kjhmoon06@naver.com</a>
+            <p>Inquiry / Feedback: <a id="contact-link">kjhmoon06@gmail.com</a></p>
         </footer>
     </div>
     <script src="options.js"></script>
+    <script>
+        const email = 'kjhmoon06@gmail.com';
+        const contactLink = document.getElementById('contact-link');
+
+        // 문의/피드백 링크 클릭 시
+        contactLink.addEventListener('click', (event) => {
+            event.preventDefault();
+            const subject = encodeURIComponent('Inquiry/Feedback about Instant Translate');
+            const gmailUrl = `https://mail.google.com/mail/?view=cm&fs=1&to=${email}&su=${subject}`;
+            window.open(gmailUrl, '_blank');
+        });
+    </script>
 </body>
 </html>

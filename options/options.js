@@ -1,5 +1,9 @@
 // options.js
-document.addEventListener('DOMContentLoaded', restoreOptions);
+document.addEventListener('DOMContentLoaded', () => {
+  // 페이지가 로드되면 저장된 설정을 복원하고 이벤트 리스너를 초기화합니다.
+  restoreOptions();
+  initializeEventListeners();
+});
 
 const enabledCheckbox = document.getElementById('extensionEnabled');
 const apiKeyInput = document.getElementById('apiKey');
@@ -7,10 +11,6 @@ const targetLangSelect = document.getElementById('targetLang');
 const saveBtn = document.getElementById('saveBtn');
 const clearBtn = document.getElementById('clearBtn');
 const statusDiv = document.getElementById('status');
-
-saveBtn.addEventListener('click', saveOptions);
-clearBtn.addEventListener('click', clearOptions);
-enabledCheckbox.addEventListener('change', saveOptions);
 
 function saveOptions() {
   const isEnabled = enabledCheckbox.checked;
@@ -48,4 +48,25 @@ function clearOptions() {
 function showStatus(msg) {
   statusDiv.textContent = msg;
   setTimeout(() => { statusDiv.textContent = ''; }, 3000);
+}
+
+function initializeEventListeners() {
+  // 기본 옵션 저장/초기화 버튼 이벤트 리스너
+  saveBtn.addEventListener('click', saveOptions);
+  clearBtn.addEventListener('click', clearOptions);
+  enabledCheckbox.addEventListener('change', saveOptions);
+
+  // 문의/피드백 링크 이벤트 리스너
+  const contactLink = document.getElementById('contact-link');
+  if (contactLink) {
+    contactLink.addEventListener('click', (event) => {
+      event.preventDefault();
+      const email = 'kjhmoon06@gmail.com';
+      const subject = encodeURIComponent('Inquiry/Feedback about Instant Translate');
+      const gmailUrl = `https://mail.google.com/mail/?view=cm&fs=1&to=${email}&su=${subject}`;
+      
+      // Manifest V3에서는 window.open 대신 chrome.tabs.create 사용을 권장합니다.
+      chrome.tabs.create({ url: gmailUrl });
+    });
+  }
 }
